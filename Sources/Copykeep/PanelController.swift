@@ -21,36 +21,27 @@ final class Panel: NSPanel {
     override var canBecomeKey: Bool { true }
 }
 
-/// The panel's backing: white in light mode like System Settings, the see-through popover
-/// material in dark mode. Follows the system when it switches.
-final class PanelBackground: NSView {
-    private let effect = NSVisualEffectView()
-
-    override init(frame: NSRect) {
-        super.init(frame: frame)
-        wantsLayer = true
-        effect.frame = bounds
-        effect.material = .popover
-        effect.blendingMode = .behindWindow
-        effect.state = .active
-        effect.autoresizingMask = [.width, .height]
-        addSubview(effect)
+/// The panel's see-through backing, like Spotlight: Liquid Glass on macOS 26 and later, the
+/// popover material before. Holds the panel's content so the glass can tint it.
+func makeGlass(around content: NSView, cornerRadius: CGFloat) -> NSView {
+    if #available(macOS 26.0, *) {
+        let glass = NSGlassEffectView()
+        glass.cornerRadius = cornerRadius
+        glass.contentView = content
+        return glass
     }
-
-    required init?(coder: NSCoder) { fatalError() }
-
-    override var wantsUpdateLayer: Bool { true }
-
-    override func updateLayer() {
-        let light = effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua
-        effect.isHidden = light
-        layer?.backgroundColor = light ? NSColor.white.cgColor : nil
-    }
-
-    override func viewDidChangeEffectiveAppearance() {
-        super.viewDidChangeEffectiveAppearance()
-        needsDisplay = true
-    }
+    let effect = NSVisualEffectView()
+    effect.material = .popover
+    effect.blendingMode = .behindWindow
+    effect.state = .active
+    effect.wantsLayer = true
+    effect.layer?.cornerRadius = cornerRadius
+    effect.layer?.cornerCurve = .continuous
+    effect.layer?.masksToBounds = true
+    content.frame = effect.bounds
+    content.autoresizingMask = [.width, .height]
+    effect.addSubview(content)
+    return effect
 }
 
 /// Lets a click on a row act straight away instead of first focusing the panel.
@@ -76,19 +67,18 @@ final class PanelController: NSObject, NSWindowDelegate {
         model = PanelModel(history: history)
         super.init()
 
-        let container = NSView(frame: NSRect(origin: .zero, size: PanelView.size))
-        container.wantsLayer = true
-        container.layer?.cornerRadius = 12
-        container.layer?.masksToBounds = true
-        container.layer?.borderWidth = 0.5
-        container.layer?.borderColor = NSColor(white: 0.5, alpha: 0.35).cgColor
-        let background = PanelBackground(frame: container.bounds)
-        background.autoresizingMask = [.width, .height]
-        container.addSubview(background)
         let hosting = FirstMouseHostingView(rootView: PanelView(model: model, history: history))
-        hosting.frame = container.bounds
-        hosting.autoresizingMask = [.width, .height]
-        container.addSubview(hosting)
+        let glass = makeGlass(around: hosting, cornerRadius: PanelView.cornerRadius)
+        glass.frame = NSRect(origin: .zero, size: PanelView.size)
+        // A hairline edge like System Settings' windows; the window server adds the shadow.
+        let container = NSView(frame: glass.frame)
+        container.wantsLayer = true
+        container.layer?.cornerRadius = PanelView.cornerRadius
+        container.layer?.cornerCurve = .continuous
+        container.layer?.borderWidth = 0.5
+        container.layer?.borderColor = NSColor(white: 0.5, alpha: 0.3).cgColor
+        glass.autoresizingMask = [.width, .height]
+        container.addSubview(glass)
         panel.contentView = container
         panel.delegate = self
 
@@ -132,6 +122,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
 
         panel.makeKeyAndOrderFront(nil)
+        panel.invalidateShadow() // follow the rounded corners, not the square frame
         panel.makeFirstResponder(model.field)
         startKeyMonitor()
     }

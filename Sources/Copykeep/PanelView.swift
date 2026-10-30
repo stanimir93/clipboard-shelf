@@ -4,6 +4,7 @@ import SwiftUI
 /// The popup: search field, tabs, the clips, and a line of key hints.
 struct PanelView: View {
     static let size = CGSize(width: 340, height: 470)
+    static let cornerRadius: CGFloat = 20
 
     @ObservedObject var model: PanelModel
     @ObservedObject var history: History
@@ -35,9 +36,9 @@ struct PanelView: View {
                         Text(t.rawValue)
                     }
                     .font(.system(size: 11.5, weight: model.tab == t ? .semibold : .regular))
-                    .padding(.horizontal, 9)
+                    .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(model.tab == t ? Color.primary.opacity(scheme == .light ? 0.085 : 0.12) : .clear))
+                    .background(Capsule().fill(model.tab == t ? Color.primary.opacity(scheme == .light ? 0.085 : 0.12) : .clear))
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -185,27 +186,38 @@ struct ClipRow: View {
     @State private var hovered = false
     @Environment(\.colorScheme) private var scheme
 
+    private static let radius: CGFloat = 12
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            content
-            HStack(spacing: 4) {
-                if clip.pinned { Image(systemName: "pin.fill").font(.system(size: 8)) }
-                Text(meta).lineLimit(1)
+        let shape = RoundedRectangle(cornerRadius: Self.radius, style: .continuous)
+        VStack(alignment: .leading, spacing: 0) {
+            if clip.kind == .image {
+                // The picture fills the card edge to edge; only the line under it is inset.
+                image
+                metaLine.padding(.horizontal, 10).padding(.vertical, 6)
+            } else {
+                VStack(alignment: .leading, spacing: 4) {
+                    content
+                    metaLine
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
             }
-            .font(.system(size: 10))
-            .foregroundStyle(selected ? Color.white.opacity(0.8) : Color.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(RoundedRectangle(cornerRadius: 8).fill(selected ? Color.accentColor : Color.primary.opacity(scheme == .light ? 0.03 : 0.06)))
+        .background(selected ? selectedFill : cardFill)
+        .clipShape(shape)
+        // Like System Settings' grouped boxes: a hairline edge and a soft shadow.
+        .overlay(shape.strokeBorder(Color.primary.opacity(selected ? 0.22 : (scheme == .light ? 0.08 : 0.12)),
+                                    lineWidth: selected ? 1.5 : 0.5))
+        .shadow(color: .black.opacity(scheme == .light ? 0.06 : 0.2), radius: 2, y: 1)
         .overlay(alignment: .topTrailing) {
             if hovered {
                 HStack(spacing: 2) {
                     iconButton(clip.pinned ? "pin.slash" : "pin", help: clip.pinned ? "Unpin (⌘P)" : "Pin (⌘P)", action: onPin)
                     iconButton("trash", help: "Delete (⌘⌫)", action: onDelete)
                 }
-                .padding(4)
+                .padding(5)
             }
         }
         .contentShape(Rectangle())
@@ -216,20 +228,38 @@ struct ClipRow: View {
         }
     }
 
+    /// Frosted white in light mode so cards read on the glass, a faint lift in dark mode.
+    private var cardFill: Color { scheme == .light ? Color.white.opacity(0.6) : Color.white.opacity(0.07) }
+    /// The selection is grey, as in Spotlight's results, not the accent colour.
+    private var selectedFill: Color { scheme == .light ? Color.black.opacity(0.09) : Color.white.opacity(0.17) }
+
+    private var metaLine: some View {
+        HStack(spacing: 4) {
+            if clip.pinned { Image(systemName: "pin.fill").font(.system(size: 8)) }
+            Text(meta).lineLimit(1)
+        }
+        .font(.system(size: 10))
+        .foregroundStyle(.secondary)
+    }
+
+    @ViewBuilder private var image: some View {
+        if let thumbnail {
+            Image(nsImage: thumbnail)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(maxWidth: .infinity)
+                .frame(height: 90)
+                .clipped()
+        } else {
+            Rectangle().fill(Color.primary.opacity(0.08)).frame(height: 90)
+                .overlay(Image(systemName: "photo").foregroundStyle(.secondary))
+        }
+    }
+
     @ViewBuilder private var content: some View {
         switch clip.kind {
         case .image:
-            if let thumbnail {
-                Image(nsImage: thumbnail)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 70)
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
-            } else {
-                RoundedRectangle(cornerRadius: 5).fill(Color.primary.opacity(0.08)).frame(height: 70)
-                    .overlay(Image(systemName: "photo").foregroundStyle(.secondary))
-            }
+            image
         case .file:
             HStack(spacing: 6) {
                 if let first = clip.fileURLs.first {
@@ -237,13 +267,13 @@ struct ClipRow: View {
                 }
                 Text(clip.preview(maskSecrets: maskSecrets)).lineLimit(2).font(.system(size: 12))
             }
-            .foregroundStyle(selected ? Color.white : Color.primary)
+            .foregroundStyle(.primary)
         case .text, .link:
             Text(clip.preview(maskSecrets: maskSecrets))
                 .font(clip.isCode ? .system(size: 11, design: .monospaced) : .system(size: 12))
                 .lineLimit(clip.kind == .link ? 2 : 3)
                 .truncationMode(clip.kind == .link ? .middle : .tail)
-                .foregroundStyle(selected ? Color.white : Color.primary)
+                .foregroundStyle(.primary)
         }
     }
 
@@ -277,7 +307,7 @@ struct SearchField: NSViewRepresentable {
         let box = NSView()
         box.wantsLayer = true
         box.layer?.cornerRadius = 16 // a capsule, like System Settings' search field
-        box.layer?.borderWidth = 3.5
+        box.layer?.borderWidth = 3
 
         let icon = NSImageView(image: NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: nil)!)
         icon.contentTintColor = .secondaryLabelColor
@@ -327,9 +357,9 @@ struct SearchField: NSViewRepresentable {
         context.coordinator.count?.stringValue = searching ? (n == 1 ? "1 result" : "\(n) results") : ""
         let light = box.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua
         box.effectiveAppearance.performAsCurrentDrawingAppearance {
-            box.layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(light ? 0.03 : 0.06).cgColor
-            // Settings' focus ring: a soft accent-coloured band, shown while the field has the focus.
-            box.layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(0.45).cgColor
+            box.layer?.backgroundColor = (light ? NSColor.white.withAlphaComponent(0.6) : NSColor.labelColor.withAlphaComponent(0.06)).cgColor
+            // A soft grey focus band, like the search fields in macOS 26.
+            box.layer?.borderColor = NSColor.labelColor.withAlphaComponent(light ? 0.1 : 0.16).cgColor
         }
     }
 

@@ -54,7 +54,7 @@ if let i = args.firstIndex(of: "--snapshot"), i + 1 < args.count {
     model.trusted = true // the snapshot shows the panel, not this process's Accessibility access
     model.query = query
     let view = NSHostingView(rootView: PanelView(model: model, history: history)
-        .background(dark ? Color(white: 0.17) : Color.white)) // as PanelBackground
+        .background(dark ? Color(white: 0.17) : Color(white: 0.93))) // stands in for the glass, which doesn't draw offscreen
     view.frame = NSRect(origin: .zero, size: PanelView.size)
     let window = NSWindow(contentRect: view.frame, styleMask: [.borderless], backing: .buffered, defer: false)
     window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
