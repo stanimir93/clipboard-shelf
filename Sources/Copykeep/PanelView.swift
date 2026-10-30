@@ -23,6 +23,9 @@ struct PanelView: View {
             footer
         }
         .frame(width: Self.size.width, height: Self.size.height)
+        // The glass alone comes out near white in light mode; a grey wash keeps the white
+        // cards and the pale blue selection readable on it.
+        .background(scheme == .light ? Color(white: 0.9).opacity(0.75) : .clear)
     }
 
     private var tabs: some View {
