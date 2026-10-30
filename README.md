@@ -33,8 +33,9 @@ ClipboardShelf out of Applications yourself and allow Accessibility for Copykeep
   lower case and digits (likely a password) show as `••••••••`. They still paste in full.
   Settings can turn this off.
 - **Code looks like code.** Clips copied from a terminal or a code editor use a monospaced font.
-- **Auto-clear by app.** Clips copied from chosen apps, such as Bitwarden's browser extension,
-  are deleted after a time you pick. See [Auto-clear](#auto-clear).
+- **Auto-clear.** Clips copied from chosen apps, such as Bitwarden's browser extension, are
+  deleted after a time you pick. All clips can be cleared after a time too (off by default).
+  See [Auto-clear](#auto-clear).
 - Pause Recording in the menu bar icon's menu stops keeping copies until you turn it back on.
 - Light and dark mode follow the system.
 
@@ -92,7 +93,9 @@ The download page is `docs/` on GitHub Pages, and its button links to the latest
 
 Settings › Auto-clear lists apps whose clips are deleted after a set time (1 minute to 1 day),
 counted from the last copy or paste. If the clip is still on the clipboard then, the clipboard is
-emptied too. Pinned clips are never deleted. A rule for a password manager (Bitwarden, 1Password,
+emptied too. Pinned clips are never deleted. All clips, at the top of the section, does the same
+for every clip whatever app it came from; it's Never until you pick a time. A clip that both
+cover goes at the shorter time. A rule for a password manager (Bitwarden, 1Password,
 Passwords…) lets its copies into the history for that long; without one they're never kept.
 
 The rules are in `~/.config/copykeep/auto-clear.json`. Settings writes it, and edits made by hand
@@ -100,6 +103,7 @@ or by a script are picked up within 10 seconds:
 
 ```json
 {
+  "allClips": 1440,
   "rules": [
     { "app": "browser-extension:bitwarden", "name": "Bitwarden (browser extension)", "minutes": 15 },
     { "app": "com.bitwarden.desktop", "name": "Bitwarden", "minutes": 15 }
@@ -108,7 +112,8 @@ or by a script are picked up within 10 seconds:
 ```
 
 `app` is the app's bundle ID (`osascript -e 'id of app "Mail"'` prints it). `name` is what Settings
-and the panel show. `minutes` is any whole number of minutes.
+and the panel show. `minutes` is any whole number of minutes. `allClips` is the minutes for every clip; leave it
+out for Never.
 
 `browser-extension:bitwarden` is for copies made in Bitwarden's browser extension, which come
 from the browser app itself. With that rule on, Copykeep asks the browser through Accessibility

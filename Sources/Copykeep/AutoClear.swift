@@ -11,18 +11,21 @@ struct AutoClearRule: Codable, Identifiable, Equatable {
 
 /// Auto-clear: clips copied from chosen apps are deleted from the history after a set time, and
 /// taken off the clipboard too when they're still on it. A rule for a password manager also lets
-/// its copies into the history, for that long. Pinned clips are never deleted.
+/// its copies into the history, for that long. `allClips`, off unless set, does the same for every
+/// clip; a clip goes at whichever time comes first. Pinned clips are never deleted.
 ///
 /// The rules live in ~/.config/copykeep/auto-clear.json so they're easy to edit by hand or by an
 /// agent; Settings reads and writes the same file, and edits are picked up within 10 seconds:
 ///
-///     {"rules": [{"app": "browser-extension:bitwarden", "name": "Bitwarden (browser extension)", "minutes": 15}]}
+///     {"allClips": 1440, "rules": [{"app": "browser-extension:bitwarden", "name": "Bitwarden (browser extension)", "minutes": 15}]}
 final class AutoClear: ObservableObject {
     static let shared = AutoClear()
     static let fileURL = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/copykeep/auto-clear.json")
     static let choices = [1, 5, 15, 30, 60, 240, 1440]
 
     @Published private(set) var rules: [AutoClearRule] = []
+    /// Minutes after which every clip is deleted; nil when off.
+    @Published private(set) var allClips: Int?
     /// Set when the file can't be read; the rules read before stay in use.
     @Published private(set) var error: String?
     private var loadedDate: Date?
@@ -46,6 +49,16 @@ final class AutoClear: ObservableObject {
         save()
     }
 
+    func setAllClips(_ minutes: Int?) {
+        allClips = minutes.flatMap { $0 > 0 ? $0 : nil }
+        save()
+    }
+
+    /// The minutes after which `clip` is deleted: its app's rule or `allClips`, the sooner one.
+    func minutes(for clip: Clip) -> Int? {
+        [rule(for: clip.sourceBundleID)?.minutes, allClips].compactMap { $0 }.min()
+    }
+
     /// Reads the file again when it changed since the last read.
     func reloadIfChanged() {
         if Self.modified() != loadedDate { reload() }
@@ -57,8 +70,8 @@ final class AutoClear: ObservableObject {
     func expire(_ history: History, now: Date = Date()) -> [Clip] {
         reloadIfChanged()
         let expired = history.clips.filter { clip in
-            guard !clip.pinned, let rule = rule(for: clip.sourceBundleID) else { return false }
-            return now.timeIntervalSince(clip.copiedAt) >= Double(rule.minutes) * 60
+            guard !clip.pinned, let minutes = minutes(for: clip) else { return false }
+            return now.timeIntervalSince(clip.copiedAt) >= Double(minutes) * 60
         }
         guard !expired.isEmpty else { return [] }
         let pb = NSPasteboard.general
@@ -77,17 +90,23 @@ final class AutoClear: ObservableObject {
         return "\(minutes) min"
     }
 
-    private struct File: Codable { var rules: [AutoClearRule] }
+    private struct File: Codable {
+        var allClips: Int?
+        var rules: [AutoClearRule]
+    }
 
     private func reload() {
         loadedDate = Self.modified()
         guard let data = try? Data(contentsOf: Self.fileURL) else {
             rules = []
+            allClips = nil
             error = nil
             return
         }
         do {
-            rules = try JSONDecoder().decode(File.self, from: data).rules.filter { $0.minutes > 0 }
+            let file = try JSONDecoder().decode(File.self, from: data)
+            rules = file.rules.filter { $0.minutes > 0 }
+            allClips = file.allClips.flatMap { $0 > 0 ? $0 : nil }
             error = nil
         } catch {
             self.error = "\(Self.fileURL.lastPathComponent) can't be read, so the rules from before stay in use: \(error.localizedDescription)"
@@ -97,7 +116,7 @@ final class AutoClear: ObservableObject {
     private func save() {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        guard let data = try? encoder.encode(File(rules: rules)) else { return }
+        guard let data = try? encoder.encode(File(allClips: allClips, rules: rules)) else { return }
         try? FileManager.default.createDirectory(at: Self.fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? data.write(to: Self.fileURL, options: .atomic)
         loadedDate = Self.modified()

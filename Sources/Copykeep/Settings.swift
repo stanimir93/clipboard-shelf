@@ -189,13 +189,20 @@ final class KeyRecorder: ObservableObject {
     }
 }
 
-/// Settings › Auto-clear: one row per app with its time, and a menu to add an app.
+/// Settings › Auto-clear: a time for every clip (off by default), one row per app with its time,
+/// and a menu to add an app.
 struct AutoClearSection: View {
     @ObservedObject var history: History
     @ObservedObject private var autoClear = AutoClear.shared
 
     var body: some View {
         Section {
+            Picker("All clips", selection: Binding(get: { autoClear.allClips ?? 0 }, set: { autoClear.setAllClips($0) })) {
+                Text("Never").tag(0)
+                ForEach(Set(AutoClear.choices + [autoClear.allClips ?? 1440]).sorted(), id: \.self) { m in
+                    Text("after \(AutoClear.label(m))").tag(m)
+                }
+            }
             ForEach(autoClear.rules) { rule in
                 HStack(spacing: 8) {
                     AppIcon(app: rule.app)
@@ -232,7 +239,7 @@ struct AutoClearSection: View {
             Text("Auto-clear")
         } footer: {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Clips copied from these apps are deleted after the time you choose, counted from the last copy or paste, and taken off the clipboard if they're still on it. Pinned clips stay. Bitwarden (browser extension) covers copies made in its popup or web vault in Chrome, Edge, Brave, Zen, Firefox and Safari.")
+                Text("All clips, or clips copied from these apps, are deleted after the time you choose, counted from the last copy or paste, and taken off the clipboard if they're still on it. When both apply, the shorter time wins. Pinned clips stay. Bitwarden (browser extension) covers copies made in its popup or web vault in Chrome, Edge, Brave, Zen, Firefox and Safari.")
                 HStack(spacing: 4) {
                     Text("Saved in ~/.config/copykeep/auto-clear.json")
                     Button("Show") { NSWorkspace.shared.activateFileViewerSelecting([AutoClear.fileURL]) }
