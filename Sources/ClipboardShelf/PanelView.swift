@@ -22,8 +22,6 @@ struct PanelView: View {
             footer
         }
         .frame(width: Self.size.width, height: Self.size.height)
-        // Light mode is white like System Settings; dark mode keeps the see-through material.
-        .background(scheme == .light ? Color.white : Color.clear)
     }
 
     private var tabs: some View {

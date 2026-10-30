@@ -21,6 +21,38 @@ final class Panel: NSPanel {
     override var canBecomeKey: Bool { true }
 }
 
+/// The panel's backing: white in light mode like System Settings, the see-through popover
+/// material in dark mode. Follows the system when it switches.
+final class PanelBackground: NSView {
+    private let effect = NSVisualEffectView()
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        effect.frame = bounds
+        effect.material = .popover
+        effect.blendingMode = .behindWindow
+        effect.state = .active
+        effect.autoresizingMask = [.width, .height]
+        addSubview(effect)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        let light = effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua
+        effect.isHidden = light
+        layer?.backgroundColor = light ? NSColor.white.cgColor : nil
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true
+    }
+}
+
 /// Lets a click on a row act straight away instead of first focusing the panel.
 final class FirstMouseHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
@@ -50,12 +82,9 @@ final class PanelController: NSObject, NSWindowDelegate {
         container.layer?.masksToBounds = true
         container.layer?.borderWidth = 0.5
         container.layer?.borderColor = NSColor(white: 0.5, alpha: 0.35).cgColor
-        let effect = NSVisualEffectView(frame: container.bounds)
-        effect.material = .popover
-        effect.blendingMode = .behindWindow
-        effect.state = .active
-        effect.autoresizingMask = [.width, .height]
-        container.addSubview(effect)
+        let background = PanelBackground(frame: container.bounds)
+        background.autoresizingMask = [.width, .height]
+        container.addSubview(background)
         let hosting = FirstMouseHostingView(rootView: PanelView(model: model, history: history))
         hosting.frame = container.bounds
         hosting.autoresizingMask = [.width, .height]
