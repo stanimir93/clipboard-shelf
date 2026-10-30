@@ -27,6 +27,10 @@ func makeGlass(around content: NSView, cornerRadius: CGFloat) -> NSView {
     if #available(macOS 26.0, *) {
         let glass = NSGlassEffectView()
         glass.cornerRadius = cornerRadius
+        // A grey tint in light mode, so the white clip cards stand out from the glass.
+        glass.tintColor = NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua ? NSColor(white: 0.5, alpha: 0.12) : NSColor(white: 0, alpha: 0.15)
+        }
         glass.contentView = content
         return glass
     }

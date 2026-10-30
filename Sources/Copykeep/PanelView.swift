@@ -85,7 +85,7 @@ struct PanelView: View {
         } else {
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 6) {
+                    LazyVStack(alignment: .leading, spacing: 8) {
                         ForEach(sections) { section in
                             if let title = section.title {
                                 Text(title)
@@ -207,10 +207,10 @@ struct ClipRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(selected ? selectedFill : cardFill)
         .clipShape(shape)
-        // Like System Settings' grouped boxes: a hairline edge and a soft shadow.
-        .overlay(shape.strokeBorder(Color.primary.opacity(selected ? 0.22 : (scheme == .light ? 0.08 : 0.12)),
-                                    lineWidth: selected ? 1.5 : 0.5))
-        .shadow(color: .black.opacity(scheme == .light ? 0.06 : 0.2), radius: 2, y: 1)
+        // Like System Settings' grouped boxes: a hairline edge and a soft shadow, so each clip
+        // stands apart from the glass and from the next one.
+        .overlay(shape.strokeBorder(edge, lineWidth: selected ? 1.5 : 0.5))
+        .shadow(color: .black.opacity(scheme == .light ? 0.08 : 0.3), radius: 3, y: 1)
         .overlay(alignment: .topTrailing) {
             if hovered {
                 HStack(spacing: 2) {
@@ -228,10 +228,14 @@ struct ClipRow: View {
         }
     }
 
-    /// Frosted white in light mode so cards read on the glass, a faint lift in dark mode.
-    private var cardFill: Color { scheme == .light ? Color.white.opacity(0.6) : Color.white.opacity(0.07) }
+    /// Near-solid white on the grey-tinted glass in light mode, a clear lift in dark mode.
+    private var cardFill: Color { scheme == .light ? Color.white.opacity(0.92) : Color.white.opacity(0.1) }
     /// The selection is grey, as in Spotlight's results, not the accent colour.
-    private var selectedFill: Color { scheme == .light ? Color.black.opacity(0.09) : Color.white.opacity(0.17) }
+    private var selectedFill: Color { scheme == .light ? Color(white: 0.84) : Color.white.opacity(0.22) }
+    private var edge: Color {
+        if selected { return scheme == .light ? Color.black.opacity(0.16) : Color.white.opacity(0.28) }
+        return scheme == .light ? Color.black.opacity(0.1) : Color.white.opacity(0.1)
+    }
 
     private var metaLine: some View {
         HStack(spacing: 4) {
