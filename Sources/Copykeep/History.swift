@@ -104,6 +104,9 @@ final class History: ObservableObject {
         save()
     }
 
+    /// Waits for pending writes; for the command-line switches, which exit straight after.
+    func waitForWrites() { io.sync {} }
+
     func reps(for id: UUID) -> Reps? {
         io.sync {
             guard let data = try? Data(contentsOf: Self.blobURL(id)) else { return nil }

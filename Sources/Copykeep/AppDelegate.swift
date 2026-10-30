@@ -7,12 +7,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var settings: SettingsWindowController!
     private var statusItem: NSStatusItem!
     private let menu = NSMenu()
+    private var expiryTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = Self.editMenu()
         history = History()
         watcher = ClipboardWatcher(history: history)
         watcher.start()
+        // Auto-clear: delete clips past their time, now and every 10 s.
+        AutoClear.shared.expire(history)
+        let t = Timer(timeInterval: 10, repeats: true) { [weak self] _ in
+            if let history = self?.history { AutoClear.shared.expire(history) }
+        }
+        RunLoop.main.add(t, forMode: .common)
+        expiryTimer = t
         settings = SettingsWindowController(history: history)
         panel = PanelController(history: history, watcher: watcher)
         panel.onSettings = { [weak self] in self?.settings.show() }

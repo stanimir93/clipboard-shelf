@@ -35,12 +35,20 @@ final class ClipboardWatcher {
         lastChange = pb.changeCount
         guard !paused else { return }
         let front = NSWorkspace.shared.frontmostApplication
-        if let id = front?.bundleIdentifier, Self.ignoredApps.contains(id) { return }
-        guard let (clip, reps) = Self.capture(pb, source: front) else { return }
+        var source = (name: front?.localizedName, app: front?.bundleIdentifier)
+        if let front, let ext = BrowserExtensions.source(in: front, wanted: AutoClear.shared.apps) {
+            source = (ext.name, ext.app)
+        }
+        // A password manager's copies stay out, unless an auto-clear rule lets them in for a while.
+        let rule = AutoClear.shared.rule(for: source.app)
+        if rule == nil, let id = source.app, Self.ignoredApps.contains(id) { return }
+        guard let (clip, reps) = Self.capture(pb, sourceName: source.name, sourceApp: source.app,
+                                              keepMarked: rule != nil) else { return }
         history.add(clip, reps: reps)
     }
 
-    /// Password managers and Keychain: nothing copied in them is kept.
+    /// Password managers and Keychain: nothing copied in them is kept, unless an auto-clear rule
+    /// covers the app.
     static let ignoredApps: Set<String> = [
         "com.1password.1password", "com.agilebits.onepassword7", "com.agilebits.onepassword-osx",
         "com.bitwarden.desktop", "com.apple.Passwords", "com.apple.keychainaccess", "org.keepassxc.keepassxc",
@@ -65,10 +73,11 @@ final class ClipboardWatcher {
 
     /// The clip and its pasteboard data for what's on the clipboard now, or nil when there's
     /// nothing worth keeping (empty, a password, or a format the app doesn't show).
-    static func capture(_ pb: NSPasteboard, source: NSRunningApplication?) -> (Clip, Reps)? {
+    /// `keepMarked` keeps copies marked as concealed too: an auto-clear rule covers the app.
+    static func capture(_ pb: NSPasteboard, sourceName: String?, sourceApp: String?, keepMarked: Bool = false) -> (Clip, Reps)? {
         guard let items = pb.pasteboardItems, !items.isEmpty else { return nil }
         let allTypes = Set(items.flatMap { $0.types.map(\.rawValue) })
-        guard allTypes.isDisjoint(with: skipTypes) else { return nil }
+        guard keepMarked || allTypes.isDisjoint(with: skipTypes) else { return nil }
 
         var reps: Reps = items.map { item in
             var dict: [String: Data] = [:]
@@ -78,8 +87,8 @@ final class ClipboardWatcher {
             return dict
         }
 
-        var clip = Clip(id: UUID(), kind: .text, text: "", sourceApp: source?.localizedName,
-                        sourceBundleID: source?.bundleIdentifier, copiedAt: Date(), pinned: false,
+        var clip = Clip(id: UUID(), kind: .text, text: "", sourceApp: sourceName,
+                        sourceBundleID: sourceApp, copiedAt: Date(), pinned: false,
                         copyCount: 1, fingerprint: "")
         let files = items.compactMap { $0.string(forType: .fileURL).flatMap(URL.init(string:)) }.filter(\.isFileURL)
         let string = pb.string(forType: .string)

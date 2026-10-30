@@ -5,6 +5,8 @@ import SwiftUI
 // Command-line switches; each exits without starting the app.
 //   --dump                         print the history as JSON (no clipboard data, only what the panel lists)
 //   --snapshot FILE.png [dark] [SEARCH]   draw the panel offscreen with the current history
+//   --snapshot-settings FILE.png [dark]   draw the Settings window offscreen
+//   --expire                       delete the clips past their auto-clear time and print them
 //   --register-login-item          turn launch at login on (scripts/install.sh)
 //   --unregister-login-item        turn it off
 // The login-item switches print the resulting state: enabled, requires-approval, not-registered or not-found.
@@ -43,6 +45,15 @@ if args.contains("--dump") {
     print()
     exit(0)
 }
+if args.contains("--expire") {
+    let history = History()
+    for clip in AutoClear.shared.expire(history) {
+        print("\(clip.sourceApp ?? "?") · \(Format.ago(clip.copiedAt)) · \(clip.kind.rawValue)")
+    }
+    if let error = AutoClear.shared.error { FileHandle.standardError.write(Data((error + "\n").utf8)) }
+    history.waitForWrites()
+    exit(0)
+}
 if let i = args.firstIndex(of: "--snapshot"), i + 1 < args.count {
     _ = NSApplication.shared
     let rest = Array(args.dropFirst(i + 2))
@@ -61,6 +72,23 @@ if let i = args.firstIndex(of: "--snapshot"), i + 1 < args.count {
     window.contentView = view
     view.layoutSubtreeIfNeeded()
     RunLoop.main.run(until: Date().addingTimeInterval(0.7))
+    guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { exit(1) }
+    view.cacheDisplay(in: view.bounds, to: rep)
+    try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: args[i + 1]))
+    print(args[i + 1])
+    exit(0)
+}
+if let i = args.firstIndex(of: "--snapshot-settings"), i + 1 < args.count {
+    _ = NSApplication.shared
+    let dark = args.dropFirst(i + 2).first == "dark"
+    let view = NSHostingView(rootView: SettingsView(history: History()))
+    view.frame = NSRect(origin: .zero, size: view.fittingSize)
+    let window = NSWindow(contentRect: view.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+    window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+    window.contentView = view
+    RunLoop.main.run(until: Date().addingTimeInterval(0.7))
+    view.frame.size = view.fittingSize
+    view.layoutSubtreeIfNeeded()
     guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { exit(1) }
     view.cacheDisplay(in: view.bounds, to: rep)
     try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: args[i + 1]))

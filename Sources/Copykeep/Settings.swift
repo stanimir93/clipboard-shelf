@@ -103,8 +103,10 @@ struct SettingsView: View {
             } header: {
                 Text("History")
             } footer: {
-                note("Pinned clips are never removed. Nothing copied in a password manager (1Password, Bitwarden, Passwords, Keychain Access) is kept, nor anything an app marks as concealed. Hidden secrets still paste in full.")
+                note("Pinned clips are never removed. Nothing copied in a password manager (1Password, Bitwarden, Passwords, Keychain Access) is kept, nor anything an app marks as concealed, unless an auto-clear rule below covers it. Hidden secrets still paste in full.")
             }
+
+            AutoClearSection(history: history)
 
             Section {
                 Toggle("Open at login", isOn: Binding(get: { login.enabled }, set: { login.set($0) }))
@@ -184,5 +186,108 @@ final class KeyRecorder: ObservableObject {
         monitor = nil
         if recording { hotKey?.resume() }
         recording = false
+    }
+}
+
+/// Settings › Auto-clear: one row per app with its time, and a menu to add an app.
+struct AutoClearSection: View {
+    @ObservedObject var history: History
+    @ObservedObject private var autoClear = AutoClear.shared
+
+    var body: some View {
+        Section {
+            ForEach(autoClear.rules) { rule in
+                HStack(spacing: 8) {
+                    AppIcon(app: rule.app)
+                    Picker(rule.name, selection: Binding(get: { rule.minutes }, set: { m in
+                        var r = rule
+                        r.minutes = m
+                        autoClear.set(r)
+                    })) {
+                        ForEach(Set(AutoClear.choices + [rule.minutes]).sorted(), id: \.self) { m in
+                            Text("after \(AutoClear.label(m))").tag(m)
+                        }
+                    }
+                    Button {
+                        autoClear.remove(rule.app)
+                    } label: {
+                        Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Stop clearing \(rule.name)")
+                }
+            }
+            Menu("Add App…") {
+                ForEach(addable, id: \.app) { item in
+                    Button(item.name) { autoClear.set(AutoClearRule(app: item.app, name: item.name, minutes: 15)) }
+                }
+                Divider()
+                Button("Other App…", action: chooseApp)
+            }
+            .fixedSize()
+            if let error = autoClear.error {
+                Text(error).font(.footnote).foregroundStyle(.red)
+            }
+        } header: {
+            Text("Auto-clear")
+        } footer: {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Clips copied from these apps are deleted after the time you choose, counted from the last copy or paste, and taken off the clipboard if they're still on it. Pinned clips stay. Bitwarden (browser extension) covers copies made in its popup or web vault in Chrome, Edge, Brave, Zen, Firefox and Safari.")
+                HStack(spacing: 4) {
+                    Text("Saved in ~/.config/copykeep/auto-clear.json")
+                    Button("Show") { NSWorkspace.shared.activateFileViewerSelecting([AutoClear.fileURL]) }
+                        .buttonStyle(.link)
+                        .disabled(!FileManager.default.fileExists(atPath: AutoClear.fileURL.path))
+                }
+            }
+            .font(.footnote).foregroundStyle(.secondary)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .onAppear { autoClear.reloadIfChanged() }
+    }
+
+    /// Bitwarden's extension, the password managers that are installed, then the apps in the
+    /// history, leaving out the ones that already have a rule.
+    private var addable: [(app: String, name: String)] {
+        var items = BrowserExtensions.known.map { ($0.app, $0.name) }
+        for id in ClipboardWatcher.ignoredApps.sorted() {
+            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
+                items.append((id, FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")))
+            }
+        }
+        var seen = Set(items.map(\.0))
+        for clip in history.clips {
+            guard let id = clip.sourceBundleID, let name = clip.sourceApp, !seen.contains(id) else { continue }
+            seen.insert(id)
+            items.append((id, name))
+        }
+        let taken = autoClear.apps
+        return items.filter { !taken.contains($0.0) }.map { (app: $0.0, name: $0.1) }
+    }
+
+    private func chooseApp() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.application]
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.prompt = "Add"
+        guard panel.runModal() == .OK, let url = panel.url, let id = Bundle(url: url)?.bundleIdentifier else { return }
+        let name = FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
+        autoClear.set(AutoClearRule(app: id, name: name, minutes: 15))
+    }
+}
+
+private struct AppIcon: View {
+    let app: String
+    var body: some View {
+        Group {
+            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: app) {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path)).resizable()
+            } else {
+                Image(systemName: app.hasPrefix("browser-extension:") ? "puzzlepiece.extension" : "app.dashed")
+                    .resizable().scaledToFit().foregroundStyle(.secondary).padding(1)
+            }
+        }
+        .frame(width: 18, height: 18)
     }
 }

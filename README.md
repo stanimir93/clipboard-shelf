@@ -33,6 +33,8 @@ ClipboardShelf out of Applications yourself and allow Accessibility for Copykeep
   lower case and digits (likely a password) show as `••••••••`. They still paste in full.
   Settings can turn this off.
 - **Code looks like code.** Clips copied from a terminal or a code editor use a monospaced font.
+- **Auto-clear by app.** Clips copied from chosen apps, such as Bitwarden's browser extension,
+  are deleted after a time you pick. See [Auto-clear](#auto-clear).
 - Pause Recording in the menu bar icon's menu stops keeping copies until you turn it back on.
 - Light and dark mode follow the system.
 
@@ -86,6 +88,38 @@ The download page is `docs/` on GitHub Pages, and its button links to the latest
 `scripts/release.sh`: it builds a universal app, zips it and creates the `v<VERSION>` release.
 `scripts/screenshots.sh` redraws the page's screenshots from a made-up history.
 
+## Auto-clear
+
+Settings › Auto-clear lists apps whose clips are deleted after a set time (1 minute to 1 day),
+counted from the last copy or paste. If the clip is still on the clipboard then, the clipboard is
+emptied too. Pinned clips are never deleted. A rule for a password manager (Bitwarden, 1Password,
+Passwords…) lets its copies into the history for that long; without one they're never kept.
+
+The rules are in `~/.config/copykeep/auto-clear.json`. Settings writes it, and edits made by hand
+or by a script are picked up within 10 seconds:
+
+```json
+{
+  "rules": [
+    { "app": "browser-extension:bitwarden", "name": "Bitwarden (browser extension)", "minutes": 15 },
+    { "app": "com.bitwarden.desktop", "name": "Bitwarden", "minutes": 15 }
+  ]
+}
+```
+
+`app` is the app's bundle ID (`osascript -e 'id of app "Mail"'` prints it). `name` is what Settings
+and the panel show. `minutes` is any whole number of minutes.
+
+`browser-extension:bitwarden` is for copies made in Bitwarden's browser extension, which come
+from the browser app itself. With that rule on, Copykeep asks the browser through Accessibility
+which page has the focus when something is copied. In Chrome, Edge, Brave, Arc, Vivaldi and
+Opera, Bitwarden's popup and side panel have the address `chrome-extension://<Bitwarden's
+extension ID>/…`. In Zen, Firefox and Safari an extension's ID differs per install, so Copykeep
+goes by the page title "Bitwarden". Copies from the web vault (`vault.bitwarden.com`,
+`vault.bitwarden.eu`) count too. A copy Bitwarden makes while you're on another site (the
+one-time code after autofill) isn't recognised. Chromium browsers only share page details with
+apps that ask, so the rule switches that on (`AXManualAccessibility`) for the browser you copy in.
+
 ## Where the history is kept
 
 `~/Library/Application Support/Copykeep`: `history.json` lists the clips, and `blobs/` holds
@@ -103,5 +137,7 @@ format over 30 MB is skipped.
 CS=/Applications/Copykeep.app/Contents/MacOS/Copykeep
 $CS --dump                         # the history as JSON (what the panel lists)
 $CS --snapshot panel.png dark zens # draw the panel offscreen, dark, searching "zens"
+$CS --snapshot-settings s.png dark # draw the Settings window offscreen
+$CS --expire                       # delete the clips past their auto-clear time, print them
 $CS --register-login-item          # launch at login on (--unregister-login-item: off)
 ```
