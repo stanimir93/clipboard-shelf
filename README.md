@@ -91,7 +91,7 @@ The download page is `docs/` on GitHub Pages, and its button links to the latest
 
 ## Auto-clear
 
-Settings › Auto-clear lists apps whose clips are deleted after a set time (1 minute to 1 day),
+Settings › Auto-clear lists apps whose clips are deleted after a set time (1 minute to 7 days),
 counted from the last copy or paste. If the clip is still on the clipboard then, the clipboard is
 emptied too. Pinned clips are never deleted. All clips, at the top of the section, does the same
 for every clip whatever app it came from; it's Never until you pick a time. A clip that both

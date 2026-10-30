@@ -21,7 +21,7 @@ struct AutoClearRule: Codable, Identifiable, Equatable {
 final class AutoClear: ObservableObject {
     static let shared = AutoClear()
     static let fileURL = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/copykeep/auto-clear.json")
-    static let choices = [1, 5, 15, 30, 60, 240, 1440]
+    static let choices = [1, 5, 15, 30, 60, 240, 1440, 2880, 4320, 10080]
 
     @Published private(set) var rules: [AutoClearRule] = []
     /// Minutes after which every clip is deleted; nil when off.
