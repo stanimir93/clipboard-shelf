@@ -7,6 +7,7 @@ struct PanelView: View {
 
     @ObservedObject var model: PanelModel
     @ObservedObject var history: History
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,6 +22,8 @@ struct PanelView: View {
             footer
         }
         .frame(width: Self.size.width, height: Self.size.height)
+        // Light mode is white like System Settings; dark mode keeps the see-through material.
+        .background(scheme == .light ? Color.white : Color.clear)
     }
 
     private var tabs: some View {
@@ -36,7 +39,7 @@ struct PanelView: View {
                     .font(.system(size: 11.5, weight: model.tab == t ? .semibold : .regular))
                     .padding(.horizontal, 9)
                     .padding(.vertical, 4)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(model.tab == t ? Color.primary.opacity(0.12) : .clear))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(model.tab == t ? Color.primary.opacity(scheme == .light ? 0.085 : 0.12) : .clear))
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -182,6 +185,7 @@ struct ClipRow: View {
     let onPin: () -> Void
     let onDelete: () -> Void
     @State private var hovered = false
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -196,7 +200,7 @@ struct ClipRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(RoundedRectangle(cornerRadius: 8).fill(selected ? Color.accentColor : Color.primary.opacity(0.06)))
+        .background(RoundedRectangle(cornerRadius: 8).fill(selected ? Color.accentColor : Color.primary.opacity(scheme == .light ? 0.03 : 0.06)))
         .overlay(alignment: .topTrailing) {
             if hovered {
                 HStack(spacing: 2) {
@@ -323,9 +327,10 @@ struct SearchField: NSViewRepresentable {
         let searching = !model.query.isEmpty
         let n = model.ordered.count
         context.coordinator.count?.stringValue = searching ? (n == 1 ? "1 result" : "\(n) results") : ""
+        let light = box.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua
         box.effectiveAppearance.performAsCurrentDrawingAppearance {
-            box.layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.06).cgColor
-            box.layer?.borderColor = (searching ? NSColor.controlAccentColor : NSColor.labelColor.withAlphaComponent(0.1)).cgColor
+            box.layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(light ? 0.03 : 0.06).cgColor
+            box.layer?.borderColor = (searching ? NSColor.controlAccentColor : NSColor.labelColor.withAlphaComponent(light ? 0.08 : 0.1)).cgColor
         }
     }
 
