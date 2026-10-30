@@ -4,6 +4,10 @@ A clipboard history for macOS that works like Windows' Win+V. Press **⌥V** in 
 small panel opens next to the text cursor with everything you copied recently. Type to search,
 pick one with the arrow keys and press Return, and it's pasted into the app you're in.
 
+**[Download for Mac](https://github.com/stanimir93/clipboard-shelf/releases/latest/download/ClipboardShelf.zip)**
+(macOS 14 or later, Apple silicon and Intel). Install steps are on the
+[download page](https://stanimir93.github.io/clipboard-shelf/).
+
 ## Features
 
 - **Opens at the text cursor.** ⌥V puts the panel below the caret, or above it when there's no
@@ -59,7 +63,10 @@ from the Accessibility list and add it again.
 
 ## Install
 
-Needs macOS 14 and Xcode or the Command Line Tools.
+Download it from the [download page](https://stanimir93.github.io/clipboard-shelf/). The app isn't
+notarized, so the first launch needs **System Settings › Privacy & Security › Open Anyway**.
+
+To build from source instead you need macOS 14 and Xcode or the Command Line Tools.
 
 ```sh
 scripts/install.sh            # builds, installs /Applications/ClipboardShelf.app, launch at login, starts it
@@ -67,6 +74,13 @@ scripts/install.sh --dest ~/Applications
 ```
 
 `./build.sh` alone builds `build/ClipboardShelf.app`.
+
+## Releasing
+
+The download page is `docs/` on GitHub Pages, and its button links to the latest release's
+`ClipboardShelf.zip`. To publish a new version, bump `VERSION`, commit, and run
+`scripts/release.sh`: it builds a universal app, zips it and creates the `v<VERSION>` release.
+`scripts/screenshots.sh` redraws the page's screenshots from a made-up history.
 
 ## Where the history is kept
 

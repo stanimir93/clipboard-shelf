@@ -34,6 +34,7 @@ if let i = args.firstIndex(of: "--snapshot"), i + 1 < args.count {
     let history = History()
     let model = PanelModel(history: history)
     model.reset()
+    model.trusted = true // the snapshot shows the panel, not this process's Accessibility access
     model.query = query
     let view = NSHostingView(rootView: PanelView(model: model, history: history)
         .background(dark ? Color(white: 0.17) : Color(white: 0.96)))

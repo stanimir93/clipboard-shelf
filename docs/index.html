@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clipboard Shelf: Win+V-style clipboard history for macOS</title>
+<meta name="description" content="A clipboard history for macOS that works like Windows' Win+V. Press ⌥V in any app and pick something you copied earlier. Free and open source.">
+<meta property="og:title" content="Clipboard Shelf">
+<meta property="og:description" content="Win+V-style clipboard history for macOS: ⌥V opens it at the text cursor.">
+<meta property="og:image" content="https://stanimir93.github.io/clipboard-shelf/panel-light.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<style>
+  :root {
+    --bg: #fbfbfd; --fg: #1d1d1f; --muted: #6e6e73; --card: #fff; --line: #e5e5ea;
+    --accent: #0a7aff; --accent-fg: #fff; --code: #f2f2f7;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111113; --fg: #f5f5f7; --muted: #a1a1a6; --card: #1c1c1e; --line: #2c2c2e; --code: #232326; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg); line-height: 1.55;
+    font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 0 24px 64px; }
+  a { color: var(--accent); }
+  code, kbd, pre { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; }
+  kbd { background: var(--code); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
+  code { background: var(--code); border-radius: 4px; padding: 1px 5px; }
+
+  .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: center; padding: 72px 0 56px; }
+  .hero h1 { font-size: 52px; line-height: 1.05; letter-spacing: -0.02em; margin: 0 0 16px; }
+  .hero p.lead { font-size: 21px; color: var(--muted); margin: 0 0 28px; }
+  .hero img { width: 100%; max-width: 360px; justify-self: center; border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.18), 0 0 0 1px var(--line); }
+  .download { display: inline-flex; align-items: center; gap: 10px; background: var(--accent); color: var(--accent-fg);
+    text-decoration: none; font-weight: 600; font-size: 18px; padding: 14px 26px; border-radius: 12px; }
+  .download:hover { filter: brightness(1.08); }
+  .meta { color: var(--muted); font-size: 14px; margin-top: 12px; }
+
+  section { padding: 40px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 30px; letter-spacing: -0.01em; margin: 0 0 20px; }
+  h3 { font-size: 18px; margin: 0 0 6px; }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; }
+  .steps li { counter-increment: step; background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 18px 16px 60px; position: relative; }
+  .steps li::before { content: counter(step); position: absolute; left: 18px; top: 15px; width: 28px; height: 28px;
+    border-radius: 50%; background: var(--accent); color: var(--accent-fg); font-weight: 600; font-size: 15px;
+    display: grid; place-items: center; }
+  .steps p { margin: 4px 0 0; color: var(--muted); }
+
+  .terminal { position: relative; margin-top: 10px; }
+  .terminal pre { background: var(--code); border: 1px solid var(--line); border-radius: 10px; padding: 14px 90px 14px 16px;
+    margin: 0; overflow-x: auto; white-space: pre; }
+  .terminal button { position: absolute; top: 9px; right: 9px; font: inherit; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card); color: var(--fg); border-radius: 7px; padding: 4px 10px; }
+
+  .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
+  .features div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .features p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  table { border-collapse: collapse; width: 100%; max-width: 560px; }
+  td { padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { white-space: nowrap; width: 1%; padding-right: 24px; }
+
+  footer { color: var(--muted); font-size: 14px; padding-top: 32px; border-top: 1px solid var(--line); }
+
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; padding-top: 48px; gap: 36px; }
+    .hero h1 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<div class="hero">
+  <div>
+    <h1>Clipboard Shelf</h1>
+    <p class="lead">A clipboard history for macOS that works like Windows' Win+V. Press <kbd>⌥V</kbd> in any app and a
+      small panel opens at the text cursor with everything you copied recently. Pick one and it's pasted.</p>
+    <a class="download" href="https://github.com/stanimir93/clipboard-shelf/releases/latest/download/ClipboardShelf.zip">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13M6 11l6 6 6-6M4 21h16"/></svg>
+      Download for Mac
+    </a>
+    <div class="meta">Free and open source · macOS 14 or later · Apple silicon and Intel ·
+      <a href="https://github.com/stanimir93/clipboard-shelf/releases">All releases</a></div>
+  </div>
+  <picture>
+    <source srcset="panel-dark.png" media="(prefers-color-scheme: dark)">
+    <img src="panel-light.png" alt="The Clipboard Shelf panel: a search field, tabs, a pinned note and recent clips">
+  </picture>
+</div>
+
+<section>
+  <h2>Install</h2>
+  <ol class="steps">
+    <li><h3>Unzip and move it to Applications</h3>
+      <p>Open the downloaded <code>ClipboardShelf.zip</code> and drag <code>ClipboardShelf</code> into your Applications folder.</p></li>
+    <li><h3>Open it once past Gatekeeper</h3>
+      <p>The app isn't notarized by Apple, so the first time macOS says it can't check it for malware. Click
+        <b>Done</b>, open <b>System Settings › Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b>
+        next to ClipboardShelf. You only do this once.</p></li>
+    <li><h3>Allow Accessibility</h3>
+      <p>The app asks for <b>Accessibility</b> on its first launch. It needs it to press <kbd>⌘V</kbd> for you and to
+        find the text cursor. Without it, choosing a clip only copies it and the panel opens at the mouse.</p></li>
+    <li><h3>Press <kbd>⌥V</kbd></h3>
+      <p>Clipboard Shelf lives in the menu bar. Turn on <b>Open at login</b> in its Settings (<kbd>⌘,</kbd> in the panel).</p></li>
+  </ol>
+  <p style="margin-top:24px">Or install from Terminal, which skips step 2:</p>
+  <div class="terminal">
+    <pre id="oneliner">curl -sL https://github.com/stanimir93/clipboard-shelf/releases/latest/download/ClipboardShelf.zip -o /tmp/cs.zip && ditto -xk /tmp/cs.zip /Applications && open /Applications/ClipboardShelf.app</pre>
+    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('oneliner').textContent).then(() => { this.textContent = 'Copied'; setTimeout(() => this.textContent = 'Copy', 1500) })">Copy</button>
+  </div>
+</section>
+
+<section>
+  <h2>What it does</h2>
+  <div class="features">
+    <div><h3>Opens at the text cursor</h3><p>Below the caret, or above it when there's no room. At the mouse when an app doesn't report its caret.</p></div>
+    <div><h3>Search as you type</h3><p>Every word must appear in the clip or the name of the app it came from. Newest first.</p></div>
+    <div><h3>Pin what you reuse</h3><p>Pinned clips stay on top and are never removed, by the history limit or by Clear.</p></div>
+    <div><h3>Keeps the formatting</h3><p>Text, RTF, HTML, links, images and files. <kbd>⇧↩</kbd> pastes plain text instead.</p></div>
+    <div><h3>Passwords stay out</h3><p>Nothing copied in 1Password, Bitwarden, Passwords, Keychain Access and other password managers is kept.</p></div>
+    <div><h3>Secrets are hidden</h3><p>API keys, tokens and password-like strings show as <code>••••••••</code> in the list and still paste in full.</p></div>
+    <div><h3>Tabs</h3><p>All, Pinned, Text, Images and Links. <kbd>Tab</kbd> and <kbd>⇧Tab</kbd> switch between them.</p></div>
+    <div><h3>Stays on your Mac</h3><p>The history is kept in <code>~/Library/Application Support/ClipboardShelf</code>. Nothing is sent anywhere.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Keys</h2>
+  <table>
+    <tr><td><kbd>⌥V</kbd></td><td>Open or close the panel (change it in Settings)</td></tr>
+    <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Move the selection</td></tr>
+    <tr><td><kbd>↩</kbd> or a click</td><td>Paste</td></tr>
+    <tr><td><kbd>⇧↩</kbd></td><td>Paste as plain text</td></tr>
+    <tr><td><kbd>⌘1</kbd> – <kbd>⌘9</kbd></td><td>Paste the first nine</td></tr>
+    <tr><td><kbd>⌘P</kbd></td><td>Pin or unpin</td></tr>
+    <tr><td><kbd>⌘⌫</kbd></td><td>Delete the clip</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Clear the search, or close</td></tr>
+  </table>
+</section>
+
+<footer>
+  <a href="https://github.com/stanimir93/clipboard-shelf">Source on GitHub</a> ·
+  <a href="https://github.com/stanimir93/clipboard-shelf/issues">Report a problem</a> ·
+  Build it yourself with <code>scripts/install.sh</code>
+</footer>
+
+</main>
+</body>
+</html>
