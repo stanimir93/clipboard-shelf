@@ -205,7 +205,12 @@ struct ClipRow: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(selected ? selectedFill : cardFill)
+        .background {
+            ZStack {
+                cardFill
+                if selected { selectedTint }
+            }
+        }
         .clipShape(shape)
         // Like System Settings' grouped boxes: a hairline edge and a soft shadow, so each clip
         // stands apart from the glass and from the next one.
@@ -230,10 +235,10 @@ struct ClipRow: View {
 
     /// Near-solid white on the grey-tinted glass in light mode, a clear lift in dark mode.
     private var cardFill: Color { scheme == .light ? Color.white.opacity(0.92) : Color.white.opacity(0.1) }
-    /// The selection is grey, as in Spotlight's results, not the accent colour.
-    private var selectedFill: Color { scheme == .light ? Color(white: 0.84) : Color.white.opacity(0.22) }
+    /// The selection is a light wash of the accent colour, not the full-strength fill.
+    private var selectedTint: Color { Color.accentColor.opacity(scheme == .light ? 0.2 : 0.35) }
     private var edge: Color {
-        if selected { return scheme == .light ? Color.black.opacity(0.16) : Color.white.opacity(0.28) }
+        if selected { return Color.accentColor.opacity(scheme == .light ? 0.55 : 0.7) }
         return scheme == .light ? Color.black.opacity(0.1) : Color.white.opacity(0.1)
     }
 
@@ -362,8 +367,8 @@ struct SearchField: NSViewRepresentable {
         let light = box.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua
         box.effectiveAppearance.performAsCurrentDrawingAppearance {
             box.layer?.backgroundColor = (light ? NSColor.white.withAlphaComponent(0.6) : NSColor.labelColor.withAlphaComponent(0.06)).cgColor
-            // A soft grey focus band, like the search fields in macOS 26.
-            box.layer?.borderColor = NSColor.labelColor.withAlphaComponent(light ? 0.1 : 0.16).cgColor
+            // A soft light-blue focus band, like the search fields in macOS 26.
+            box.layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(light ? 0.25 : 0.35).cgColor
         }
     }
 
