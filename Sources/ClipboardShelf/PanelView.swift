@@ -276,8 +276,8 @@ struct SearchField: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let box = NSView()
         box.wantsLayer = true
-        box.layer?.cornerRadius = 8
-        box.layer?.borderWidth = 1
+        box.layer?.cornerRadius = 16 // a capsule, like System Settings' search field
+        box.layer?.borderWidth = 3.5
 
         let icon = NSImageView(image: NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: nil)!)
         icon.contentTintColor = .secondaryLabelColor
@@ -306,12 +306,12 @@ struct SearchField: NSViewRepresentable {
         box.addSubview(count)
         NSLayoutConstraint.activate([
             box.heightAnchor.constraint(equalToConstant: 32),
-            icon.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 9),
+            icon.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 12),
             icon.centerYAnchor.constraint(equalTo: box.centerYAnchor),
             field.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 6),
             field.centerYAnchor.constraint(equalTo: box.centerYAnchor),
             count.leadingAnchor.constraint(equalTo: field.trailingAnchor, constant: 6),
-            count.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -9),
+            count.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -12),
             count.centerYAnchor.constraint(equalTo: box.centerYAnchor),
         ])
         context.coordinator.count = count
@@ -328,7 +328,8 @@ struct SearchField: NSViewRepresentable {
         let light = box.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua
         box.effectiveAppearance.performAsCurrentDrawingAppearance {
             box.layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(light ? 0.03 : 0.06).cgColor
-            box.layer?.borderColor = (searching ? NSColor.controlAccentColor : NSColor.labelColor.withAlphaComponent(light ? 0.08 : 0.1)).cgColor
+            // Settings' focus ring: a soft accent-coloured band, shown while the field has the focus.
+            box.layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(0.45).cgColor
         }
     }
 
