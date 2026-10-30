@@ -26,7 +26,7 @@ struct PanelView: View {
 
     private var tabs: some View {
         HStack(spacing: 4) {
-            ForEach(ShelfTab.allCases) { t in
+            ForEach(ClipTab.allCases) { t in
                 Button {
                     model.tab = t
                 } label: {

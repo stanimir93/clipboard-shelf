@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds Clipboard Shelf, installs it into /Applications (or --dest DIR), turns on launch at login
+# Builds Copykeep, installs it into /Applications (or --dest DIR), turns on launch at login
 # and starts it.
 #   scripts/install.sh               build from source and install
 #   scripts/install.sh --dest DIR    install into DIR instead
@@ -17,12 +17,22 @@ while [ $# -gt 0 ]; do
 done
 
 ./build.sh
-APP="$DEST/ClipboardShelf.app"
-pkill -x ClipboardShelf 2>/dev/null || true
-for _ in $(seq 1 20); do pgrep -x ClipboardShelf >/dev/null || break; sleep 0.25; done
+# Copykeep used to be Clipboard Shelf: take the old app out of login items and Applications.
+OLD="$DEST/ClipboardShelf.app"
+if [ -d "$OLD" ]; then
+  "$OLD/Contents/MacOS/ClipboardShelf" --unregister-login-item >/dev/null 2>&1 || true
+  pkill -x ClipboardShelf 2>/dev/null || true
+  for _ in $(seq 1 20); do pgrep -x ClipboardShelf >/dev/null || break; sleep 0.25; done
+  rm -rf "$OLD"
+  echo "Removed $OLD (Copykeep takes over its history and settings)"
+fi
+
+APP="$DEST/Copykeep.app"
+pkill -x Copykeep 2>/dev/null || true
+for _ in $(seq 1 20); do pgrep -x Copykeep >/dev/null || break; sleep 0.25; done
 rm -rf "$APP"
-ditto build/ClipboardShelf.app "$APP"
+ditto build/Copykeep.app "$APP"
 xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
 echo "Installed $APP"
-echo "Launch at login: $("$APP/Contents/MacOS/ClipboardShelf" --register-login-item)"
+echo "Launch at login: $("$APP/Contents/MacOS/Copykeep" --register-login-item)"
 open "$APP"

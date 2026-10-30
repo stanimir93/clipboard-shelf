@@ -15,7 +15,7 @@ final class SettingsWindowController {
         if window == nil {
             let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 440, height: 560),
                              styleMask: [.titled, .closable], backing: .buffered, defer: false)
-            w.title = "Clipboard Shelf Settings"
+            w.title = "Copykeep Settings"
             w.isReleasedWhenClosed = false
             w.contentViewController = NSHostingController(rootView: SettingsView(history: history))
             w.center()

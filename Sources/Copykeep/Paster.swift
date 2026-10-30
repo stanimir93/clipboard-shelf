@@ -7,7 +7,7 @@ import Carbon.HIToolbox
 enum Paster {
     static var trusted: Bool { AXIsProcessTrusted() }
 
-    /// Shows macOS's "Clipboard Shelf would like to control this computer" prompt.
+    /// Shows macOS's "Copykeep would like to control this computer" prompt.
     static func askForAccess() {
         let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
         AXIsProcessTrustedWithOptions([key: true] as CFDictionary)

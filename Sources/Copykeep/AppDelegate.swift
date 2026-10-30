@@ -20,7 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "list.clipboard", accessibilityDescription: "Clipboard Shelf")
+            button.image = NSImage(systemSymbolName: "list.clipboard", accessibilityDescription: "Copykeep")
             button.target = self
             button.action = #selector(statusClicked)
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -65,7 +65,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(NSMenuItem(title: "Clear History (keeps pinned)", action: #selector(clearHistory), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Quit Clipboard Shelf", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Quit Copykeep", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         for item in menu.items where item.action != #selector(NSApplication.terminate(_:)) { item.target = self }
     }
 
@@ -84,7 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// A dimmed icon while recording is paused.
     private func updateIcon() {
         statusItem.button?.appearsDisabled = watcher.paused
-        statusItem.button?.toolTip = watcher.paused ? "Clipboard Shelf (paused)" : "Clipboard Shelf"
+        statusItem.button?.toolTip = watcher.paused ? "Copykeep (paused)" : "Copykeep"
     }
 
     /// An Edit menu, never shown (menu bar app), so ⌘C, ⌘V, ⌘A and ⌘Z work in text fields.

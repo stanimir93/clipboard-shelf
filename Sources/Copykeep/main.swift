@@ -17,6 +17,23 @@ func loginItemState() -> String {
     }
 }
 
+/// Copykeep was called Clipboard Shelf. The first launch after the rename moves its history
+/// over and copies its settings, except having asked for Accessibility: macOS gives the renamed
+/// app its own permission, so it asks again.
+func takeOverClipboardShelf() {
+    let files = FileManager.default
+    let old = History.dir.deletingLastPathComponent().appendingPathComponent("ClipboardShelf")
+    if !files.fileExists(atPath: History.dir.path), files.fileExists(atPath: old.path) {
+        try? files.moveItem(at: old, to: History.dir)
+    }
+    let defaults = UserDefaults.standard
+    guard !defaults.bool(forKey: "tookOverClipboardShelf") else { return }
+    for (key, value) in defaults.persistentDomain(forName: "com.stanimir93.clipboardshelf") ?? [:]
+    where key != "askedForAccess" && defaults.object(forKey: key) == nil {
+        defaults.set(value, forKey: key)
+    }
+    defaults.set(true, forKey: "tookOverClipboardShelf")
+}
 let args = CommandLine.arguments
 if args.contains("--dump") {
     let encoder = JSONEncoder()
@@ -64,6 +81,7 @@ if args.contains("--register-login-item") || args.contains("--unregister-login-i
     exit(0)
 }
 
+takeOverClipboardShelf() // not for the switches above, which may run on a made-up history
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate

@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Clipboard Shelf: Win+V-style clipboard history for macOS</title>
+<title>Copykeep: Win+V-style clipboard history for macOS</title>
 <meta name="description" content="A clipboard history for macOS that works like Windows' Win+V. Press ⌥V in any app and pick something you copied earlier. Free and open source.">
-<meta property="og:title" content="Clipboard Shelf">
+<meta property="og:title" content="Copykeep">
 <meta property="og:description" content="Win+V-style clipboard history for macOS: ⌥V opens it at the text cursor.">
-<meta property="og:image" content="https://stanimir93.github.io/clipboard-shelf/panel-light.png">
+<meta property="og:image" content="https://stanimir93.github.io/copykeep/panel-light.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
 <style>
   :root {
@@ -78,19 +78,19 @@
 
 <div class="hero">
   <div>
-    <h1>Clipboard Shelf</h1>
+    <h1>Copykeep</h1>
     <p class="lead">A clipboard history for macOS that works like Windows' Win+V. Press <kbd>⌥V</kbd> in any app and a
       small panel opens at the text cursor with everything you copied recently. Pick one and it's pasted.</p>
-    <a class="download" href="https://github.com/stanimir93/clipboard-shelf/releases/latest/download/ClipboardShelf.zip">
+    <a class="download" href="https://github.com/stanimir93/copykeep/releases/latest/download/Copykeep.zip">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13M6 11l6 6 6-6M4 21h16"/></svg>
       Download for Mac
     </a>
     <div class="meta">Free and open source · macOS 14 or later · Apple silicon and Intel ·
-      <a href="https://github.com/stanimir93/clipboard-shelf/releases">All releases</a></div>
+      <a href="https://github.com/stanimir93/copykeep/releases">All releases</a></div>
   </div>
   <picture>
     <source srcset="panel-dark.png" media="(prefers-color-scheme: dark)">
-    <img src="panel-light.png" alt="The Clipboard Shelf panel: a search field, tabs, a pinned note and recent clips">
+    <img src="panel-light.png" alt="The Copykeep panel: a search field, tabs, a pinned note and recent clips">
   </picture>
 </div>
 
@@ -98,20 +98,20 @@
   <h2>Install</h2>
   <ol class="steps">
     <li><h3>Unzip and move it to Applications</h3>
-      <p>Open the downloaded <code>ClipboardShelf.zip</code> and drag <code>ClipboardShelf</code> into your Applications folder.</p></li>
+      <p>Open the downloaded <code>Copykeep.zip</code> and drag <code>Copykeep</code> into your Applications folder.</p></li>
     <li><h3>Open it once past Gatekeeper</h3>
       <p>The app isn't notarized by Apple, so the first time macOS says it can't check it for malware. Click
         <b>Done</b>, open <b>System Settings › Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b>
-        next to ClipboardShelf. You only do this once.</p></li>
+        next to Copykeep. You only do this once.</p></li>
     <li><h3>Allow Accessibility</h3>
       <p>The app asks for <b>Accessibility</b> on its first launch. It needs it to press <kbd>⌘V</kbd> for you and to
         find the text cursor. Without it, choosing a clip only copies it and the panel opens at the mouse.</p></li>
     <li><h3>Press <kbd>⌥V</kbd></h3>
-      <p>Clipboard Shelf lives in the menu bar. Turn on <b>Open at login</b> in its Settings (<kbd>⌘,</kbd> in the panel).</p></li>
+      <p>Copykeep lives in the menu bar. Turn on <b>Open at login</b> in its Settings (<kbd>⌘,</kbd> in the panel).</p></li>
   </ol>
   <p style="margin-top:24px">Or install from Terminal, which skips step 2:</p>
   <div class="terminal">
-    <pre id="oneliner">curl -sL https://github.com/stanimir93/clipboard-shelf/releases/latest/download/ClipboardShelf.zip -o /tmp/cs.zip && ditto -xk /tmp/cs.zip /Applications && open /Applications/ClipboardShelf.app</pre>
+    <pre id="oneliner">curl -sL https://github.com/stanimir93/copykeep/releases/latest/download/Copykeep.zip -o /tmp/cs.zip && ditto -xk /tmp/cs.zip /Applications && open /Applications/Copykeep.app</pre>
     <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('oneliner').textContent).then(() => { this.textContent = 'Copied'; setTimeout(() => this.textContent = 'Copy', 1500) })">Copy</button>
   </div>
 </section>
@@ -126,7 +126,7 @@
     <div><h3>Passwords stay out</h3><p>Nothing copied in 1Password, Bitwarden, Passwords, Keychain Access and other password managers is kept.</p></div>
     <div><h3>Secrets are hidden</h3><p>API keys, tokens and password-like strings show as <code>••••••••</code> in the list and still paste in full.</p></div>
     <div><h3>Tabs</h3><p>All, Pinned, Text, Images and Links. <kbd>Tab</kbd> and <kbd>⇧Tab</kbd> switch between them.</p></div>
-    <div><h3>Stays on your Mac</h3><p>The history is kept in <code>~/Library/Application Support/ClipboardShelf</code>. Nothing is sent anywhere.</p></div>
+    <div><h3>Stays on your Mac</h3><p>The history is kept in <code>~/Library/Application Support/Copykeep</code>. Nothing is sent anywhere.</p></div>
   </div>
 </section>
 
@@ -145,8 +145,8 @@
 </section>
 
 <footer>
-  <a href="https://github.com/stanimir93/clipboard-shelf">Source on GitHub</a> ·
-  <a href="https://github.com/stanimir93/clipboard-shelf/issues">Report a problem</a> ·
+  <a href="https://github.com/stanimir93/copykeep">Source on GitHub</a> ·
+  <a href="https://github.com/stanimir93/copykeep/issues">Report a problem</a> ·
   Build it yourself with <code>scripts/install.sh</code>
 </footer>
 

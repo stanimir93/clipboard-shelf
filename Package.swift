@@ -2,10 +2,10 @@
 import PackageDescription
 
 let package = Package(
-    name: "ClipboardShelf",
+    name: "Copykeep",
     platforms: [.macOS(.v14)],
     targets: [
         // The menu bar app: watches the clipboard and pastes from its history.
-        .executableTarget(name: "ClipboardShelf", path: "Sources/ClipboardShelf"),
+        .executableTarget(name: "Copykeep", path: "Sources/Copykeep"),
     ]
 )

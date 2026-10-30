@@ -1,7 +1,7 @@
 import AppKit
 import Combine
 
-enum ShelfTab: String, CaseIterable, Identifiable {
+enum ClipTab: String, CaseIterable, Identifiable {
     case all = "All", pinned = "Pinned", text = "Text", images = "Images", links = "Links"
     var id: Self { self }
 
@@ -26,7 +26,7 @@ final class PanelModel: ObservableObject {
 
     let history: History
     @Published var query = "" { didSet { if query != oldValue { selectFirst() } } }
-    @Published var tab: ShelfTab = .all { didSet { if tab != oldValue { selectFirst() } } }
+    @Published var tab: ClipTab = .all { didSet { if tab != oldValue { selectFirst() } } }
     @Published var selection: UUID?
     /// Set when the selection moved by keyboard, so the list scrolls to it (hovering doesn't).
     @Published var scrollTarget: UUID?
@@ -98,7 +98,7 @@ final class PanelModel: ObservableObject {
     }
 
     func cycleTab(_ delta: Int) {
-        let all = ShelfTab.allCases
+        let all = ClipTab.allCases
         let i = all.firstIndex(of: tab) ?? 0
         tab = all[(i + delta + all.count) % all.count]
     }

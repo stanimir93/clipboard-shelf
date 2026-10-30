@@ -4,12 +4,12 @@ import ImageIO
 /// Pasteboard data for one clip: one dictionary per pasteboard item, type name to bytes.
 typealias Reps = [[String: Data]]
 
-/// The clipboard history, newest first, kept in ~/Library/Application Support/ClipboardShelf:
+/// The clipboard history, newest first, kept in ~/Library/Application Support/Copykeep:
 /// history.json lists the clips, blobs/<id>.plist holds each one's pasteboard data and
 /// blobs/<id>.png an image's thumbnail.
 final class History: ObservableObject {
     static let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("ClipboardShelf")
+        .appendingPathComponent("Copykeep")
     private static let listURL = dir.appendingPathComponent("history.json")
     private static let blobs = dir.appendingPathComponent("blobs")
 
@@ -21,7 +21,7 @@ final class History: ObservableObject {
     }
 
     @Published private(set) var clips: [Clip] = []
-    private let io = DispatchQueue(label: "ClipboardShelf.history")
+    private let io = DispatchQueue(label: "Copykeep.history")
     private let thumbs = NSCache<NSUUID, NSImage>()
 
     init() {

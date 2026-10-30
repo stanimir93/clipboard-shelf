@@ -1,12 +1,16 @@
-# Clipboard Shelf
+# Copykeep
 
 A clipboard history for macOS that works like Windows' Win+V. Press **⌥V** in any app and a
 small panel opens next to the text cursor with everything you copied recently. Type to search,
 pick one with the arrow keys and press Return, and it's pasted into the app you're in.
 
-**[Download for Mac](https://github.com/stanimir93/clipboard-shelf/releases/latest/download/ClipboardShelf.zip)**
+**[Download for Mac](https://github.com/stanimir93/copykeep/releases/latest/download/Copykeep.zip)**
 (macOS 14 or later, Apple silicon and Intel). Install steps are on the
-[download page](https://stanimir93.github.io/clipboard-shelf/).
+[download page](https://stanimir93.github.io/copykeep/).
+
+Copykeep used to be called Clipboard Shelf. Its first launch takes over Clipboard Shelf's history
+and settings. `scripts/install.sh` also removes the old app; after a download, drag
+ClipboardShelf out of Applications yourself and allow Accessibility for Copykeep.
 
 ## Features
 
@@ -63,28 +67,28 @@ from the Accessibility list and add it again.
 
 ## Install
 
-Download it from the [download page](https://stanimir93.github.io/clipboard-shelf/). The app isn't
+Download it from the [download page](https://stanimir93.github.io/copykeep/). The app isn't
 notarized, so the first launch needs **System Settings › Privacy & Security › Open Anyway**.
 
 To build from source instead you need macOS 14 and Xcode or the Command Line Tools.
 
 ```sh
-scripts/install.sh            # builds, installs /Applications/ClipboardShelf.app, launch at login, starts it
+scripts/install.sh            # builds, installs /Applications/Copykeep.app, launch at login, starts it
 scripts/install.sh --dest ~/Applications
 ```
 
-`./build.sh` alone builds `build/ClipboardShelf.app`.
+`./build.sh` alone builds `build/Copykeep.app`.
 
 ## Releasing
 
 The download page is `docs/` on GitHub Pages, and its button links to the latest release's
-`ClipboardShelf.zip`. To publish a new version, bump `VERSION`, commit, and run
+`Copykeep.zip`. To publish a new version, bump `VERSION`, commit, and run
 `scripts/release.sh`: it builds a universal app, zips it and creates the `v<VERSION>` release.
 `scripts/screenshots.sh` redraws the page's screenshots from a made-up history.
 
 ## Where the history is kept
 
-`~/Library/Application Support/ClipboardShelf`: `history.json` lists the clips, and `blobs/` holds
+`~/Library/Application Support/Copykeep`: `history.json` lists the clips, and `blobs/` holds
 each clip's clipboard data (`<id>.plist`) and an image's thumbnail (`<id>.png`). It stays on this
 Mac. Settings › History sets how many unpinned clips to keep (200 by default).
 
@@ -96,7 +100,7 @@ format over 30 MB is skipped.
 ## Command line
 
 ```sh
-CS=/Applications/ClipboardShelf.app/Contents/MacOS/ClipboardShelf
+CS=/Applications/Copykeep.app/Contents/MacOS/Copykeep
 $CS --dump                         # the history as JSON (what the panel lists)
 $CS --snapshot panel.png dark zens # draw the panel offscreen, dark, searching "zens"
 $CS --register-login-item          # launch at login on (--unregister-login-item: off)

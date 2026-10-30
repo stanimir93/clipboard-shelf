@@ -52,7 +52,7 @@ struct Shortcut: Codable, Equatable {
 
 /// The shortcut that opens and closes the panel from any app (Settings › Shortcut), ⌥V unless changed.
 /// Carbon's RegisterEventHotKey: works without Accessibility access, and the key press
-/// goes to Clipboard Shelf only.
+/// goes to Copykeep only.
 final class HotKey: ObservableObject {
     static let shared = HotKey()
     private static let defaultsKey = "toggleShortcut"
